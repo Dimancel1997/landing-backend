@@ -2,6 +2,15 @@
 
 Backend-сервис для лендинг-презентации разработчика с REST API, формой обратной связи, файловым хранением данных, rate limiting, логированием и AI-интеграцией через OpenRouter (OpenAI-совместимый API).
 
+## 🌐 Демо
+
+Проект задеплоен на Render:
+
+- **Swagger UI (интерактивная документация):** https://landing-backend-6a24.onrender.com/docs
+- **Health check:** https://landing-backend-6a24.onrender.com/api/health
+
+> ⚠️ Бесплатный тариф Render «засыпает» после 15 минут без запросов — первое открытие может занять 30–60 секунд.
+
 ## Возможности
 
 - `POST /api/contact` — прием формы обратной связи.
