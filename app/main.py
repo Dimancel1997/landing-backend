@@ -1,15 +1,20 @@
 import logging
 
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+from pathlib import Path
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppException
 from app.core.logging import configure_logging
 from app.core.middleware import request_logging_middleware
+from app.db.session import init_db
 from app.models.common import ErrorResponse
 
 settings = get_settings()
@@ -19,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:
+    init_db()
+
     app = FastAPI(
         title=settings.app_name,
         debug=settings.app_debug,
@@ -41,6 +48,10 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
+
+    static_dir = Path("static")
+    if static_dir.exists():
+        app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
     return app
 
@@ -83,7 +94,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             content=ErrorResponse(
                 error_code="validation_error",
                 message="Invalid request payload.",
-                details=exc.errors(),
+                details=jsonable_encoder(exc.errors()),
             ).model_dump(),
         )
 

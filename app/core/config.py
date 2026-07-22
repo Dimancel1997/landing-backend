@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     rate_limit_window_seconds: int = 60
 
     storage_dir: Path = Path("app/storage")
+    database_url: str = "sqlite:///./app/storage/landing.db"
     log_dir: Path = Path("logs")
     request_log_file: Path = Path("logs/requests.log")
     app_log_file: Path = Path("logs/app.log")

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.config import Settings
 from app.models.contact import ContactRecord
@@ -28,7 +28,7 @@ class EmailService:
             self.settings.owner_email,
             "New landing contact request",
             contact.id,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         )
         logger.info(
             "EMAIL_TO_OWNER_BODY | name=%s | phone=%s | email=%s | comment=%s | "
@@ -48,7 +48,7 @@ class EmailService:
             contact.email,
             "We received your request",
             contact.id,
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         )
         logger.info(
             "EMAIL_TO_USER_BODY | name=%s | message=%s",

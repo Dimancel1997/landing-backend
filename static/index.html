@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Backend — AI-powered Contact Platform</title>
+    <meta name="description" content="Интерактивный лендинг с AI-анализом обратной связи, мониторингом API и метриками в реальном времени.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="#" class="brand">
+                <div class="brand-icon">⚡</div>
+                <span class="brand-name">Landing<span class="gradient-text">Core</span></span>
+            </a>
+            
+            <div class="nav-actions">
+                <div class="health-badge" id="healthBadge" title="Проверка соединения с FastAPI">
+                    <span class="status-dot offline"></span>
+                    <span class="status-text">Проверка...</span>
+                </div>
+                <a href="#metrics" class="nav-link">Метрики</a>
+                <a href="#contact" class="btn btn-sm btn-primary">Написать нам</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-badge">🚀 FastAPI + OpenAI + Pydantic v2</div>
+            <h1 class="hero-title">Умный сервис обратной связи с <span class="gradient-text">AI-анализом</span></h1>
+            <p class="hero-subtitle">
+                Отправляйте сообщения через форму обратной связи — наша система мгновенно проанализирует тональность, классифицирует обращение и сформирует авто-ответ с помощью нейросети.
+            </p>
+        </section>
+
+        <div class="grid-layout" id="contact">
+            <!-- Form Card -->
+            <section class="card form-card">
+                <div class="card-header">
+                    <h2>Форма обратной связи</h2>
+                    <p>Заполните форму для отправки запроса на бэкенд</p>
+                </div>
+
+                <form id="contactForm" novalidate>
+                    <div class="form-group">
+                        <label for="nameInput">Ваше имя <span class="req">*</span></label>
+                        <input type="text" id="nameInput" name="name" class="form-control" placeholder="Иван Петров" required minlength="2" maxlength="80">
+                        <span class="field-error" id="nameError"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phoneInput">Телефон <span class="req">*</span></label>
+                            <input type="tel" id="phoneInput" name="phone" class="form-control" placeholder="+7 999 123-45-67" required>
+                            <span class="field-error" id="phoneError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emailInput">Email <span class="req">*</span></label>
+                            <input type="email" id="emailInput" name="email" class="form-control" placeholder="ivan@example.com" required>
+                            <span class="field-error" id="emailError"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentInput">Сообщение / Вопрос <span class="req">*</span></label>
+                        <textarea id="commentInput" name="comment" class="form-control" rows="4" placeholder="Здравствуйте! Расскажите подробнее о вашей услуге..." required minlength="10" maxlength="2000"></textarea>
+                        <div class="field-footer">
+                            <span class="field-error" id="commentError"></span>
+                            <span class="char-count"><span id="charCounter">0</span> / 2000</span>
+                        </div>
+                    </div>
+
+                    <div id="formAlert" class="alert hidden"></div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-primary btn-block">
+                        <span class="btn-text">Отправить заявку</span>
+                        <div class="spinner hidden" id="submitSpinner"></div>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Result & AI Analysis Card -->
+            <section class="card result-card">
+                <div class="card-header">
+                    <h2>Результат и AI-Анализ</h2>
+                    <p>Статус обработки и отклик нейросети</p>
+                </div>
+
+                <div id="resultPlaceholder" class="result-placeholder">
+                    <div class="placeholder-icon">🤖</div>
+                    <h3>Ожидание отправки</h3>
+                    <p>Заполните и отправьте форму слева, чтобы увидеть результат валидации и AI-анализа в реальном времени.</p>
+                </div>
+
+                <div id="resultContent" class="result-content hidden">
+                    <div class="status-banner success" id="statusBanner">
+                        <div class="banner-icon">✓</div>
+                        <div class="banner-info">
+                            <h4 id="responseStatusTitle">Заявка принята</h4>
+                            <p id="responseMessage">Сообщение успешно сохранено в базе.</p>
+                        </div>
+                    </div>
+
+                    <div class="request-meta">
+                        <span class="meta-label">ID Заявки:</span>
+                        <code class="meta-id" id="requestId">-</code>
+                    </div>
+
+                    <div class="ai-box">
+                        <div class="ai-box-header">
+                            <span class="ai-badge-title">🧠 OpenAI Анализ</span>
+                            <span class="ai-status-tag" id="aiStatusTag">Обработано</span>
+                        </div>
+
+                        <div class="ai-metrics-grid">
+                            <div class="ai-metric-item">
+                                <span class="metric-label">Тональность</span>
+                                <div class="sentiment-pill neutral" id="sentimentPill">
+                                    <span class="dot"></span>
+                                    <span id="sentimentValue">Нейтральная</span>
+                                </div>
+                            </div>
+
+                            <div class="ai-metric-item">
+                                <span class="metric-label">Категория</span>
+                                <span class="category-tag" id="categoryTag">General</span>
+                            </div>
+                        </div>
+
+                        <div class="ai-reply-block">
+                            <span class="metric-label">Предложенный ответ пользователю:</span>
+                            <blockquote class="ai-reply-text" id="aiSuggestedReply">
+                                "Спасибо за обращение! Наш специалист свяжется с вами в ближайшее время."
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Metrics Dashboard Section -->
+        <section class="metrics-section" id="metrics">
+            <div class="section-header">
+                <div>
+                    <h2>Статистика обращений</h2>
+                    <p>Данные из эндпоинта <code>GET /api/metrics</code></p>
+                </div>
+                <button id="refreshMetricsBtn" class="btn btn-secondary btn-sm">
+                    🔄 Обновить метрики
+                </button>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">📬</div>
+                    <div class="metric-data">
+                        <span class="metric-value" id="metricTotal">0</span>
+                        <span class="metric-title">Всего обращений</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-data">
+                        <span class="metric-value text-success" id="metricAiSuccess">0</span>
+                        <span class="metric-title">AI Анализов (Успешно)</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">🛡️</div>
+                    <div class="metric-data">
+                        <span class="metric-value text-amber" id="metricAiFallback">0</span>
+                        <span class="metric-title">AI Fallback (Локально)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card sentiment-distribution-card">
+                <h3>Распределение тональности</h3>
+                <div class="sentiment-bars">
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span>Позитивные</span>
+                            <span id="countPositive">0</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill bar-positive" id="barPositive" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span>Нейтральные</span>
+                            <span id="countNeutral">0</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill bar-neutral" id="barNeutral" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span>Негативные</span>
+                            <span id="countNegative">0</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill bar-negative" id="barNegative" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <p>© 2026 Landing Core Backend. FastAPI + Pydantic + OpenAI integration.</p>
+            <div class="footer-links">
+                <a href="/docs" target="_blank" class="footer-link">Swagger UI (/docs)</a>
+                <a href="/redoc" target="_blank" class="footer-link">ReDoc (/redoc)</a>
+                <a href="/api/health" target="_blank" class="footer-link">API Health</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

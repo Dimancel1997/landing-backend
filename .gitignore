@@ -7,6 +7,8 @@ __pycache__/
 .venv/
 logs/*.log
 app/storage/*.json
+app/storage/*.db
+*.db
 !app/storage/.gitkeep
 !logs/.gitkeep
 .idea/

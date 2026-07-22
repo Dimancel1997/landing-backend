@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import StrEnum
 from uuid import UUID, uuid4
 
@@ -94,7 +94,7 @@ class ContactRecord(BaseModel):
     email: EmailStr
     comment: str
     ai_analysis: AIAnalysis
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ContactResponse(BaseModel):

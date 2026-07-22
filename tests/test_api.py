@@ -61,3 +61,11 @@ def test_metrics() -> None:
 
     assert response.status_code == 200
     assert "total_contacts" in response.json()
+
+
+def test_static_frontend_index() -> None:
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Landing Backend" in response.text
+

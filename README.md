@@ -1,6 +1,6 @@
 # Landing Backend API
 
-Backend-сервис для лендинг-презентации разработчика с REST API, формой обратной связи, файловым хранением данных, rate limiting, логированием и AI-интеграцией через OpenRouter (OpenAI-совместимый API).
+Backend-сервис для лендинг-презентации разработчика с REST API, формой обратной связи, реляционной базой данных (SQLAlchemy, SQLite/PostgreSQL), rate limiting, логированием и AI-интеграцией через OpenRouter (OpenAI-совместимый API).
 
 ## 🌐 Демо
 
@@ -20,9 +20,10 @@ Backend-сервис для лендинг-презентации разрабо
 - Двухуровневый graceful fallback:
   - если AI-провайдер недоступен (нет ключа, нет квоты, таймаут, ошибка API), включается локальный rule-based анализ;
   - основной сценарий обработки заявки никогда не ломается.
+- Хранение данных в реляционной БД через **SQLAlchemy** (SQLite по умолчанию или PostgreSQL при переключении `DATABASE_URL`).
 - `GET /api/health` — проверка статуса.
 - `GET /api/metrics` — статистика обращений.
-- Rate limiting через JSON-файл (без Redis).
+- Rate limiting через БД.
 - Логирование всех запросов в файл.
 - Глобальный error handler с корректными HTTP-статусами.
 - CORS и конфигурация через `.env`.
@@ -33,19 +34,21 @@ Backend-сервис для лендинг-презентации разрабо
 - Python 3.11+
 - FastAPI
 - Pydantic v2
+- SQLAlchemy 2.0+
+- SQLite / PostgreSQL
 - OpenAI Python SDK (клиент для OpenRouter)
 - Poetry / pip
-- JSON file storage
 
 ## Архитектура
 
 ```text
-Routers / Controllers  ->  Services / Business Logic  ->  Repositories / File Storage
+Routers / Controllers  ->  Services / Business Logic  ->  Repositories  ->  SQLAlchemy ORM (SQLite / PostgreSQL)
 ```
 
 - **Роутеры** (`app/api`) принимают HTTP-запросы, валидируют их через Pydantic и вызывают сервисы.
 - **Сервисы** (`app/services`) содержат бизнес-логику: обработка заявки, AI-анализ, email, метрики, rate limiting.
-- **Репозитории** (`app/repositories`) отвечают за работу с JSON-файлами. Их можно заменить на PostgreSQL/Redis без переписывания API и сервисов.
+- **База данных и модели** (`app/db`) содержат сессии SQLAlchemy и ORM-модели `ContactDB`, `MetricsDB`, `RateLimitDB`.
+- **Репозитории** (`app/repositories`) отвечают за изоляцию операций с базой данных через SQLAlchemy Session.
 
 ### Структура проекта
 
@@ -66,10 +69,11 @@ landing-backend/
 │   │   ├── exceptions.py        # Кастомные исключения
 │   │   ├── logging.py           # Настройка логов
 │   │   └── middleware.py        # Логирование запросов
-│   ├── models/                  # Pydantic-модели
-│   ├── repositories/            # Работа с JSON-файлами
+│   ├── db/                      # SQLAlchemy сессии и ORM-модели (ContactDB, MetricsDB, RateLimitDB)
+│   ├── models/                  # Pydantic-модели (DTO/schemas)
+│   ├── repositories/            # Репозиторный слой абстракции над SQLAlchemy Session
 │   ├── services/                # Бизнес-логика
-│   └── storage/                 # JSON-хранилище
+│   └── storage/                 # Хранилище SQLite базы данных (landing.db)
 ├── logs/
 ├── tests/
 ├── .env.example
@@ -107,6 +111,7 @@ Swagger: `http://localhost:8000/docs`
 
 | Переменная | Описание |
 |---|---|
+| `DATABASE_URL` | Строка подключения к БД (`sqlite:///./app/storage/landing.db` по умолчанию или `postgresql://...`) |
 | `OPENAI_API_KEY` | Ключ OpenRouter (`sk-or-v1-...`), https://openrouter.ai/keys |
 | `OPENAI_BASE_URL` | Адрес API. По умолчанию `https://openrouter.ai/api/v1` |
 | `OPENAI_MODEL` | Модель, напр. `openai/gpt-4o-mini` или бесплатная `meta-llama/llama-3.1-8b-instruct:free` |
