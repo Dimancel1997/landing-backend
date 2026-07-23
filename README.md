@@ -267,17 +267,39 @@ Comment: {comment}
 
 ## Хранение данных
 
-- `app/storage/contacts.json` — обращения.
-- `app/storage/metrics.json` — статистика.
-- `app/storage/rate_limits.json` — данные rate limiting.
+Все данные приложения хранятся в реляционной БД через **SQLAlchemy 2.0**.
+По умолчанию используется SQLite, для production можно переключиться на
+PostgreSQL сменой `DATABASE_URL` — код приложения при этом не меняется.
+
+ORM-модели (`app/db/models.py`):
+- `ContactDB` — обращения из формы (имя, телефон, email, комментарий,
+  результат AI-анализа, дата создания).
+- `MetricsDB` — агрегированная статистика обращений (всего, успехи/фолбэки
+  AI, распределение тональности).
+- `RateLimitDB` — записи по IP для контроля частоты запросов.
+
+Доступ к БД инкапсулирован в **репозиторном слое** (`app/repositories/`):
+сервисы не работают с SQLAlchemy Session напрямую, что позволяет заменить
+хранилище (например, на PostgreSQL/Redis) без изменения бизнес-логики и API.
+
+Файл БД по умолчанию: `app/storage/landing.db`.
+
+Логи хранятся отдельно от БД, в файлах:
 - `logs/requests.log` — все HTTP-запросы (метод, путь, статус, IP, длительность).
 - `logs/app.log` — прикладные события и ошибки.
 
-Запись в JSON-файлы защищена блокировкой (`threading.Lock`). Для production рекомендуется PostgreSQL/Redis — репозиторный слой позволяет заменить хранилище без изменения API.
-
 ## Rate limiting
 
-Sliding window на JSON-файле: максимум `RATE_LIMIT_MAX_REQUESTS` запросов с одного IP за `RATE_LIMIT_WINDOW_SECONDS` секунд. При превышении — `429 Too Many Requests`.
+Реализован по алгоритму sliding window на таблице `RateLimitDB`: не более
+`RATE_LIMIT_MAX_REQUESTS` запросов с одного IP за `RATE_LIMIT_WINDOW_SECONDS`
+секунд (по умолчанию 5 запросов за 60 секунд). При превышении лимита сервис
+возвращает `429 Too Many Requests` с телом:
+
+{
+  "error_code": "rate_limit_exceeded",
+  "message": "Too many requests. Please try again later.",
+  "details": null
+}
 
 ## Email
 
